@@ -138,6 +138,9 @@ Desktop.ini
 # VS Code
 .vscode/
 
+# SQLite cache database
+data/
+
 # SSH keys (specific to this project)
 aaronx3011Github
 aaronx3011Github.pub

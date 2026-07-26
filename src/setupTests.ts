@@ -2,7 +2,7 @@
 import sql from 'mssql/msnodesqlv8'; // <-- ADD THIS LINE
 import { Server } from 'http';
 import app from './app'; // Import your Express app
-import poolPromise from './config/database'; // Import your database pool
+import { getPool } from './config/database'; // Import your database pool
 
 let server: Server;
 let dbPool: sql.ConnectionPool;
@@ -17,7 +17,7 @@ beforeAll(async () => {
     server = app.listen(process.env.PORT || 3000);
     
     // Establish a database connection
-    dbPool = await poolPromise;
+    dbPool = await getPool();
     global.__dbPool = dbPool; // Make it globally available for tests
 
     console.log('----------------------------------------------------------');

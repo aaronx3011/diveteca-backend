@@ -1,4 +1,6 @@
-import poolPromise from '../config/database';
+import { getPool } from '../config/database';
+import { CacheService } from './CacheService';
+import { ServiceUnavailableError } from '../utils/errors';
 import sql from 'mssql';
 
 export interface SalesGoal {
@@ -12,7 +14,7 @@ export interface SalesGoal {
 
 export class SalesGoalsService {
     static async getAll(): Promise<SalesGoal[]> {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await pool.request().query(`
             SELECT id, year, month, goal_amount, created_at, updated_at
             FROM [desarrollo].[dbo].[sales_goals]
@@ -22,7 +24,7 @@ export class SalesGoalsService {
     }
 
     static async getById(id: number): Promise<SalesGoal | null> {
-        const pool = await poolPromise;
+        const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, id)
             .query(`
@@ -34,7 +36,10 @@ export class SalesGoalsService {
     }
 
     static async create(year: number, month: number, goalAmount: number): Promise<SalesGoal> {
-        const pool = await poolPromise;
+        if (!CacheService.getMssqlAvailable()) {
+            throw new ServiceUnavailableError();
+        }
+        const pool = await getPool();
         const result = await pool.request()
             .input('year', sql.Int, year)
             .input('month', sql.Int, month)
@@ -48,7 +53,10 @@ export class SalesGoalsService {
     }
 
     static async update(id: number, goalAmount: number): Promise<SalesGoal | null> {
-        const pool = await poolPromise;
+        if (!CacheService.getMssqlAvailable()) {
+            throw new ServiceUnavailableError();
+        }
+        const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, id)
             .input('goal_amount', sql.Decimal(18, 2), goalAmount)
@@ -62,7 +70,10 @@ export class SalesGoalsService {
     }
 
     static async delete(id: number): Promise<boolean> {
-        const pool = await poolPromise;
+        if (!CacheService.getMssqlAvailable()) {
+            throw new ServiceUnavailableError();
+        }
+        const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, id)
             .query(`

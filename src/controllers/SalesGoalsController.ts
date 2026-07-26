@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { SalesGoalsService } from '../services/SalesGoalsService';
+import { ServiceUnavailableError } from '../utils/errors';
 
 export class SalesGoalsController {
     static async getAll(req: Request, res: Response) {
@@ -46,6 +47,9 @@ export class SalesGoalsController {
             const goal = await SalesGoalsService.create(year, month, goal_amount);
             res.status(201).json({ data: goal });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             if (error.code === 'EREQUEST' && error.number === 2627) {
                 return res.status(409).json({ error: 'A goal for this year/month already exists' });
             }
@@ -72,6 +76,9 @@ export class SalesGoalsController {
             }
             res.status(200).json({ data: goal });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error('Error updating sales goal:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -90,6 +97,9 @@ export class SalesGoalsController {
             }
             res.status(200).json({ message: 'Sales goal deleted' });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error('Error deleting sales goal:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }

@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
-import poolPromise from '../config/database';
+import { getPool } from '../config/database';
 import { signToken } from '../config/auth';
+import { CacheService } from './CacheService';
+import { ServiceUnavailableError } from '../utils/errors';
 import { SessionsService } from './SessionsService';
 
 const SALT_ROUNDS = 10;
@@ -28,7 +30,10 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<AuthResult> {
-    const pool = await poolPromise;
+    if (!CacheService.getMssqlAvailable()) {
+      throw new ServiceUnavailableError();
+    }
+    const pool = await getPool();
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const request = pool.request();
@@ -67,7 +72,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<AuthResult> {
-    const pool = await poolPromise;
+    const pool = await getPool();
     const request = pool.request();
     request.input('username', username);
 
@@ -151,7 +156,7 @@ export class AuthService {
   }
 
   static async getMe(userId: number) {
-    const pool = await poolPromise;
+    const pool = await getPool();
     const request = pool.request();
     request.input('userId', userId);
 
@@ -168,7 +173,7 @@ export class AuthService {
   }
 
   static async checkResetStatus(username: string) {
-    const pool = await poolPromise;
+    const pool = await getPool();
     const request = pool.request();
     request.input('username', username);
 

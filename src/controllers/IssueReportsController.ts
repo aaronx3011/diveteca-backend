@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { IssueReportsService } from '../services/IssueReportsService';
+import { ServiceUnavailableError } from '../utils/errors';
 
 const ALLOWED_SEVERITIES = ['Critical', 'High', 'Medium', 'Low'];
 const ALLOWED_STATUSES = ['open', 'in_review', 'resolved'];
@@ -61,6 +62,9 @@ export class IssueReportsController {
             );
             res.status(201).json({ data: report });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error('Error creating issue report:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -84,6 +88,9 @@ export class IssueReportsController {
             }
             res.status(200).json({ data: report });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error('Error updating issue report:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
@@ -102,6 +109,9 @@ export class IssueReportsController {
             }
             res.status(200).json({ message: 'Issue report deleted' });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error('Error deleting issue report:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }

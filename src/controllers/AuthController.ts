@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService';
 import { SessionsService } from '../services/SessionsService';
+import { ServiceUnavailableError } from '../utils/errors';
 
 export class AuthController {
   static async register(req: Request, res: Response) {
@@ -23,6 +24,9 @@ export class AuthController {
 
       res.status(201).json(result);
     } catch (error: any) {
+      if (error instanceof ServiceUnavailableError) {
+        return res.status(503).json({ error: 'service_unavailable', message: error.message });
+      }
       console.error('Registration error:', error);
       if (error.message?.includes('UNIQUE') || error.number === 2627) {
         return res.status(409).json({ error: 'Username or email already exists' });

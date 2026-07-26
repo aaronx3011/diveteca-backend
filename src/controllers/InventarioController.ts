@@ -3,13 +3,11 @@ import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
 import { InventarioService } from '../services/InventarioService';
+import { ServiceUnavailableError } from '../utils/errors';
 
 export class InventarioController {
     
     static async getInventarioTotalData(req: Request, res: Response) {
-
-
-
         try {
             const fechas = await InventarioService.getInventarioTotal();
             res.status(200).json({
@@ -62,6 +60,9 @@ export class InventarioController {
             await InventarioService.addAlmacenExcluido(codigo_almacen);
             res.status(201).json({ message: "Almacen excluido added" });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error(`Error adding almacen excluido:`, error);
             res.status(500).json({ error: "Internal Server Error" });
         }
@@ -73,6 +74,9 @@ export class InventarioController {
             await InventarioService.removeAlmacenExcluido(codigoAlmacen);
             res.status(200).json({ message: "Almacen excluido removed" });
         } catch (error: any) {
+            if (error instanceof ServiceUnavailableError) {
+                return res.status(503).json({ error: 'service_unavailable', message: error.message });
+            }
             console.error(`Error removing almacen excluido:`, error);
             res.status(500).json({ error: "Internal Server Error" });
         }
