@@ -72,6 +72,9 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<AuthResult> {
+    if (!CacheService.getMssqlAvailable()) {
+      throw new ServiceUnavailableError();
+    }
     const pool = await getPool();
     const request = pool.request();
     request.input('username', username);

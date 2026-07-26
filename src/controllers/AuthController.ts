@@ -52,6 +52,9 @@ export class AuthController {
 
       res.status(200).json(result);
     } catch (error: any) {
+      if (error instanceof ServiceUnavailableError) {
+        return res.status(503).json({ error: 'service_unavailable', message: error.message });
+      }
       console.error('Login error:', error);
       if (error.message === 'Invalid credentials') {
         return res.status(401).json({ error: 'Invalid credentials' });
