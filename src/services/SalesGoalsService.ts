@@ -15,25 +15,31 @@ export interface SalesGoal {
 
 export class SalesGoalsService {
     static async getAll(): Promise<SalesGoal[]> {
-        const pool = await getPool();
-        const result = await pool.request().query(`
-            SELECT id, year, month, goal_amount, created_at, updated_at
-            FROM [desarrollo].[dbo].[sales_goals]
-            ORDER BY year DESC, month DESC
-        `);
-        return result.recordset;
+        const key = CacheService.buildCacheKey('SalesGoalsService', 'getAll');
+        return CacheService.cacheAside(key, async () => {
+            const pool = await getPool();
+            const result = await pool.request().query(`
+                SELECT id, year, month, goal_amount, created_at, updated_at
+                FROM [desarrollo].[dbo].[sales_goals]
+                ORDER BY year DESC, month DESC
+            `);
+            return result.recordset;
+        });
     }
 
     static async getById(id: number): Promise<SalesGoal | null> {
-        const pool = await getPool();
-        const result = await pool.request()
-            .input('id', sql.Int, id)
-            .query(`
-                SELECT id, year, month, goal_amount, created_at, updated_at
-                FROM [desarrollo].[dbo].[sales_goals]
-                WHERE id = @id
-            `);
-        return result.recordset[0] || null;
+        const key = CacheService.buildCacheKey('SalesGoalsService', 'getById', id.toString());
+        return CacheService.cacheAside(key, async () => {
+            const pool = await getPool();
+            const result = await pool.request()
+                .input('id', sql.Int, id)
+                .query(`
+                    SELECT id, year, month, goal_amount, created_at, updated_at
+                    FROM [desarrollo].[dbo].[sales_goals]
+                    WHERE id = @id
+                `);
+            return result.recordset[0] || null;
+        });
     }
 
     static async create(year: number, month: number, goalAmount: number): Promise<SalesGoal> {
@@ -50,6 +56,7 @@ export class SalesGoalsService {
                 OUTPUT INSERTED.id, INSERTED.year, INSERTED.month, INSERTED.goal_amount, INSERTED.created_at, INSERTED.updated_at
                 VALUES (@year, @month, @goal_amount)
             `);
+        CacheService.del(CacheService.buildCacheKey('SalesGoalsService', 'getAll'));
         return result.recordset[0];
     }
 
@@ -67,6 +74,8 @@ export class SalesGoalsService {
                 OUTPUT INSERTED.id, INSERTED.year, INSERTED.month, INSERTED.goal_amount, INSERTED.created_at, INSERTED.updated_at
                 WHERE id = @id
             `);
+        CacheService.del(CacheService.buildCacheKey('SalesGoalsService', 'getAll'));
+        CacheService.del(CacheService.buildCacheKey('SalesGoalsService', 'getById', id));
         return result.recordset[0] || null;
     }
 
@@ -81,6 +90,8 @@ export class SalesGoalsService {
                 DELETE FROM [desarrollo].[dbo].[sales_goals]
                 WHERE id = @id
             `);
+        CacheService.del(CacheService.buildCacheKey('SalesGoalsService', 'getAll'));
+        CacheService.del(CacheService.buildCacheKey('SalesGoalsService', 'getById', id));
         return result.rowsAffected[0] > 0;
     }
 }
