@@ -1,4 +1,5 @@
 import { getCacheDb } from '../config/cache';
+import { SessionCacheEntry } from '../types/cache';
 import { ServiceUnavailableError } from '../utils/errors';
 
 const DEFAULT_TTL_SECONDS = 1800;
@@ -42,64 +43,6 @@ export class CacheService {
     db.prepare('DELETE FROM cache_entries WHERE cache_key = ?').run(key);
   }
 
-  static getMssqlAvailable(): boolean {
-    const db = getCacheDb();
-    const row = db.prepare("SELECT value FROM cache_metadata WHERE key = 'mssql_available'").get() as { value: string } | undefined;
-    return row?.value === 'true';
-  }
-
-  static setMssqlAvailable(available: boolean): void {
-    const db = getCacheDb();
-    db.prepare(`
-      INSERT INTO cache_metadata (key, value) VALUES ('mssql_available', ?)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run(available ? 'true' : 'false');
-  }
-
-  static getMssqlFailureCount(): number {
-    const db = getCacheDb();
-    const row = db.prepare("SELECT value FROM cache_metadata WHERE key = 'mssql_failure_count'").get() as { value: string } | undefined;
-    return row ? parseInt(row.value, 10) : 0;
-  }
-
-  static incrementMssqlFailureCount(): void {
-    const db = getCacheDb();
-    const count = this.getMssqlFailureCount() + 1;
-    const now = Math.floor(Date.now() / 1000);
-    db.prepare(`
-      INSERT INTO cache_metadata (key, value) VALUES ('mssql_last_failure_at', ?)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run(now.toString());
-    db.prepare(`
-      INSERT INTO cache_metadata (key, value) VALUES ('mssql_failure_count', ?)
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run(count.toString());
-  }
-
-  static resetMssqlFailureCount(): void {
-    const db = getCacheDb();
-    db.prepare(`
-      INSERT INTO cache_metadata (key, value) VALUES ('mssql_failure_count', '0')
-      ON CONFLICT(key) DO UPDATE SET value = excluded.value
-    `).run();
-  }
-
-  static shouldRetryMssql(): boolean {
-    const db = getCacheDb();
-    const count = this.getMssqlFailureCount();
-    if (count === 0) return true;
-
-    const row = db.prepare("SELECT value FROM cache_metadata WHERE key = 'mssql_last_failure_at'").get() as { value: string } | undefined;
-    if (!row) return true;
-
-    const lastFailure = parseInt(row.value, 10);
-    const now = Math.floor(Date.now() / 1000);
-    const elapsed = now - lastFailure;
-
-    const backoff = Math.min(Math.pow(2, count), 300);
-    return elapsed >= backoff;
-  }
-
   static updateSession(token: string, sessionData: {
     id: string;
     user_id: string;
@@ -119,11 +62,11 @@ export class CacheService {
     `).run(sessionData.id, sessionData.user_id, token, now, sessionData.expires_at, sessionData.is_valid);
   }
 
-  static getSession(token: string): SessionData | null {
+  static getSession(token: string): SessionCacheEntry | null {
     const db = getCacheDb();
     const row = db.prepare(`
       SELECT id, user_id, token, expires_at, is_valid FROM sessions WHERE token = ?
-    `).get(token) as SessionData | undefined;
+    `).get(token) as SessionCacheEntry | undefined;
 
     if (!row) return null;
     return row;
@@ -169,12 +112,4 @@ export class CacheService {
     });
     return `${serviceName}:${methodName}:${paramParts.join(':')}`;
   }
-}
-
-interface SessionData {
-  id: string;
-  user_id: string;
-  token: string;
-  expires_at: number;
-  is_valid: number;
 }
