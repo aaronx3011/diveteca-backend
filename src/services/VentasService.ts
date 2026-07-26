@@ -1,12 +1,6 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
-
-interface DateRange {
-  startYear: number;
-  startMonth: number;
-  endYear: number;
-  endMonth: number;
-}
+import { DateRange } from '../types/ventas';
 
 export class VentasService {
     static async getVentasAnual(year: string | null = null) {
