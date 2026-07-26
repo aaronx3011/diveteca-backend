@@ -52,6 +52,9 @@ export class AuthController {
 
       res.status(200).json(result);
     } catch (error: any) {
+      if (error instanceof ServiceUnavailableError) {
+        return res.status(503).json({ error: 'service_unavailable', message: error.message });
+      }
       console.error('Login error:', error);
       if (error.message === 'Invalid credentials') {
         return res.status(401).json({ error: 'Invalid credentials' });
@@ -82,6 +85,9 @@ export class AuthController {
       const user = await AuthService.getMe(req.user.userId);
       res.status(200).json({ data: user });
     } catch (error: any) {
+      if (error instanceof ServiceUnavailableError) {
+        return res.status(503).json({ error: 'service_unavailable', message: error.message });
+      }
       console.error('Get me error:', error);
       if (error.message === 'User not found') {
         return res.status(404).json({ error: 'User not found' });
@@ -99,6 +105,9 @@ export class AuthController {
       const status = await AuthService.checkResetStatus(username);
       res.status(200).json(status);
     } catch (error: any) {
+      if (error instanceof ServiceUnavailableError) {
+        return res.status(503).json({ error: 'service_unavailable', message: error.message });
+      }
       console.error('Check reset error:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }

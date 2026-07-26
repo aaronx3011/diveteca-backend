@@ -72,6 +72,9 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<AuthResult> {
+    if (!CacheService.getMssqlAvailable()) {
+      throw new ServiceUnavailableError();
+    }
     const pool = await getPool();
     const request = pool.request();
     request.input('username', username);
@@ -156,6 +159,9 @@ export class AuthService {
   }
 
   static async getMe(userId: number) {
+    if (!CacheService.getMssqlAvailable()) {
+      throw new ServiceUnavailableError();
+    }
     const pool = await getPool();
     const request = pool.request();
     request.input('userId', userId);
@@ -173,6 +179,9 @@ export class AuthService {
   }
 
   static async checkResetStatus(username: string) {
+    if (!CacheService.getMssqlAvailable()) {
+      throw new ServiceUnavailableError();
+    }
     const pool = await getPool();
     const request = pool.request();
     request.input('username', username);
