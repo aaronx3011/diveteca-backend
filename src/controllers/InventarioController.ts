@@ -3,6 +3,7 @@ import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
 import { InventarioService } from '../services/InventarioService';
+import { CacheService } from '../services/CacheService';
 import { ServiceUnavailableError } from '../utils/errors';
 
 export class InventarioController {
@@ -10,6 +11,10 @@ export class InventarioController {
     static async getInventarioTotalData(req: Request, res: Response) {
         try {
             const fechas = await InventarioService.getInventarioTotal();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 data: fechas
@@ -24,6 +29,10 @@ export class InventarioController {
         try {
             const codigoArticulo = req.params.codigoArticulo as string;
             const data = await InventarioService.getLotesByProducto(codigoArticulo);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({ data });
         } catch (error: any) {
             console.error(`Error fetching lotes by producto:`, error);
@@ -34,6 +43,10 @@ export class InventarioController {
     static async getAlmacenesList(req: Request, res: Response) {
         try {
             const data = await InventarioService.getAlmacenesList();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({ data });
         } catch (error: any) {
             console.error(`Error fetching almacenes list:`, error);
@@ -44,6 +57,10 @@ export class InventarioController {
     static async getAlmacenesExcluidos(req: Request, res: Response) {
         try {
             const data = await InventarioService.getAlmacenesExcluidos();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({ data });
         } catch (error: any) {
             console.error(`Error fetching almacenes excluidos:`, error);

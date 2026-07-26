@@ -1,11 +1,16 @@
 import { Request, Response } from 'express';
 import { SalesGoalsService } from '../services/SalesGoalsService';
+import { CacheService } from '../services/CacheService';
 import { ServiceUnavailableError } from '../utils/errors';
 
 export class SalesGoalsController {
     static async getAll(req: Request, res: Response) {
         try {
             const goals = await SalesGoalsService.getAll();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({ data: goals });
         } catch (error: any) {
             console.error('Error fetching sales goals:', error);
@@ -22,6 +27,10 @@ export class SalesGoalsController {
             const goal = await SalesGoalsService.getById(id);
             if (!goal) {
                 return res.status(404).json({ error: 'Sales goal not found' });
+            }
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
             }
             res.status(200).json({ data: goal });
         } catch (error: any) {

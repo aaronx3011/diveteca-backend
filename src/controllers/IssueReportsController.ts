@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { IssueReportsService } from '../services/IssueReportsService';
+import { CacheService } from '../services/CacheService';
 import { ServiceUnavailableError } from '../utils/errors';
 
 const ALLOWED_SEVERITIES = ['Critical', 'High', 'Medium', 'Low'];
@@ -9,6 +10,10 @@ export class IssueReportsController {
     static async getAll(req: Request, res: Response) {
         try {
             const reports = await IssueReportsService.getAll();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({ data: reports });
         } catch (error: any) {
             console.error('Error fetching issue reports:', error);
@@ -25,6 +30,10 @@ export class IssueReportsController {
             const report = await IssueReportsService.getById(id);
             if (!report) {
                 return res.status(404).json({ error: 'Issue report not found' });
+            }
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
             }
             res.status(200).json({ data: report });
         } catch (error: any) {
