@@ -8,10 +8,14 @@ export class VentasService {
             const pool = await getPool();
             let query = `SELECT * FROM [aaron_view_VentasDolarizadasAnual]`;
             if (year) {
-                query += ` WHERE [Anio] = ${year}`;
+                query += ` WHERE [Anio] = @year`;
             }
             query += ` ORDER BY [Anio]`;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            if (year) {
+                request.input('year', year);
+            }
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -22,12 +26,16 @@ export class VentasService {
             const pool = await getPool();
             let query = `SELECT * FROM [aaron_view_VentasDolarizadasMensual]`;
             if (year) {
-                query += ` WHERE [Anio] = ${year}`;
+                query += ` WHERE [Anio] = @year`;
                 query += ` ORDER BY [Mes]`;
             } else {
                 query += ` ORDER BY [Anio] DESC, [Mes] DESC`;
             }
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            if (year) {
+                request.input('year', year);
+            }
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -38,12 +46,16 @@ export class VentasService {
             const pool = await getPool();
             let query = `SELECT * FROM [aaron_view_DetalleVentasDolarizadasProductoMensual]`;
             if (producto) {
-                query += ` WHERE [Codigo_Articulo] = '${producto}'`;
+                query += ` WHERE [Codigo_Articulo] = @producto`;
                 query += ` ORDER BY [Anio] DESC, [Mes] DESC`;
             } else {
                 throw new Error("Product parameter is required.");
             }
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            if (producto) {
+                request.input('producto', producto);
+            }
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -87,11 +99,14 @@ export class VentasService {
                     SUM([Total_Facturas]) AS [Total_Facturas],
                     SUM([Total_Unidades]) AS [Total_Unidades]
                 FROM [aaron_view_DetalleVentasDolarizadasProductoMensual]
-                WHERE ([Anio] * 100 + [Mes]) BETWEEN ${startPeriod} AND ${endPeriod}
+                WHERE ([Anio] * 100 + [Mes]) BETWEEN @startPeriod AND @endPeriod
                 GROUP BY [Codigo_Articulo], [Ref_Articulo], [Descripcion_Articulo]
                 ORDER BY [Total_USD] DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('startPeriod', startPeriod);
+            request.input('endPeriod', endPeriod);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -144,11 +159,15 @@ export class VentasService {
             const query = `
                 SELECT *
                 FROM [aaron_view_DetalleVentasDolarizadasProductoMensual]
-                WHERE [Codigo_Articulo] = '${producto}'
-                    AND ([Anio] * 100 + [Mes]) BETWEEN ${startPeriod} AND ${endPeriod}
+                WHERE [Codigo_Articulo] = @producto
+                    AND ([Anio] * 100 + [Mes]) BETWEEN @startPeriod AND @endPeriod
                 ORDER BY [Anio] DESC, [Mes] DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('producto', producto);
+            request.input('startPeriod', startPeriod);
+            request.input('endPeriod', endPeriod);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -180,10 +199,12 @@ export class VentasService {
             const query = `
                 SELECT *
                 FROM [aaron_view_DetalleVentasDolarizadasProductoCliente]
-                WHERE [Codigo_Articulo] = '${producto}'
+                WHERE [Codigo_Articulo] = @producto
                 ORDER BY [Total_USD] DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('producto', producto);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -195,10 +216,12 @@ export class VentasService {
             const query = `
                 SELECT *
                 FROM [aaron_view_DetalleVentasDolarizadasClienteMensual]
-                WHERE [Codigo_Cliente] = '${cliente}'
+                WHERE [Codigo_Cliente] = @cliente
                 ORDER BY [Anio] DESC, [Mes] DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('cliente', cliente);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -266,10 +289,12 @@ export class VentasService {
             const query = `
                 SELECT *
                 FROM [aaron_view_DetalleVentasDolarizadasProductoCliente]
-                WHERE [Codigo_Cliente] = '${cliente}'
+                WHERE [Codigo_Cliente] = @cliente
                 ORDER BY [Total_USD] DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('cliente', cliente);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
@@ -281,11 +306,14 @@ export class VentasService {
             const query = `
                 SELECT *
                 FROM [aaron_view_DetalleVentasDolarizadas]  
-                WHERE Fecha_Emision >= DATEFROMPARTS(${year}, ${month}, 1)
-                    AND Fecha_Emision < DATEADD(MONTH, 1, DATEFROMPARTS(${year}, ${month}, 1))
+                WHERE Fecha_Emision >= DATEFROMPARTS(@year, @month, 1)
+                    AND Fecha_Emision < DATEADD(MONTH, 1, DATEFROMPARTS(@year, @month, 1))
                 ORDER BY Fecha_Emision DESC
             `;
-            const result = await pool.request().query(query);
+            const request = pool.request();
+            request.input('year', year);
+            request.input('month', month);
+            const result = await request.query(query);
             return result.recordset;
         });
     }
