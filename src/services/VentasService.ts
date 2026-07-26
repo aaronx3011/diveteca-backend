@@ -1,6 +1,13 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
 
+interface DateRange {
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
+}
+
 export class VentasService {
     static async getVentasAnual(year: string | null = null) {
         const key = CacheService.buildCacheKey('VentasService', 'getVentasAnual', year);
@@ -60,30 +67,12 @@ export class VentasService {
         });
     }
 
-    static async getVentasAgrupadoMensualPorProducto(
-        startYear: string,
-        startMonth: string,
-        endYear: string,
-        endMonth: string
-    ) {
-        const key = CacheService.buildCacheKey('VentasService', 'getVentasAgrupadoMensualPorProducto', startYear, startMonth, endYear, endMonth);
+    static async getVentasAgrupadoMensualPorProducto(dateRange: DateRange) {
+        const key = CacheService.buildCacheKey('VentasService', 'getVentasAgrupadoMensualPorProducto',
+          dateRange.startYear, dateRange.startMonth, dateRange.endYear, dateRange.endMonth);
         return CacheService.cacheAside(key, async () => {
-            const startYearInt = Number.parseInt(startYear, 10);
-            const startMonthInt = Number.parseInt(startMonth, 10);
-            const endYearInt = Number.parseInt(endYear, 10);
-            const endMonthInt = Number.parseInt(endMonth, 10);
-
-            if (
-                Number.isNaN(startYearInt) ||
-                Number.isNaN(startMonthInt) ||
-                Number.isNaN(endYearInt) ||
-                Number.isNaN(endMonthInt)
-            ) {
-                throw new Error('Invalid date range parameters.');
-            }
-
-            const startPeriod = startYearInt * 100 + startMonthInt;
-            const endPeriod = endYearInt * 100 + endMonthInt;
+            const startPeriod = dateRange.startYear * 100 + dateRange.startMonth;
+            const endPeriod = dateRange.endYear * 100 + dateRange.endMonth;
 
             if (endPeriod < startPeriod) {
                 throw new Error('End date must be the same or later than start date.');
@@ -125,31 +114,12 @@ export class VentasService {
         });
     }
 
-    static async getVentasDetalleProductoMensualFechas(
-        producto: string,
-        startYear: string,
-        startMonth: string,
-        endYear: string,
-        endMonth: string
-    ) {
-        const key = CacheService.buildCacheKey('VentasService', 'getVentasDetalleProductoMensualFechas', producto, startYear, startMonth, endYear, endMonth);
+    static async getVentasDetalleProductoMensualFechas(producto: string, dateRange: DateRange) {
+        const key = CacheService.buildCacheKey('VentasService', 'getVentasDetalleProductoMensualFechas',
+          producto, dateRange.startYear, dateRange.startMonth, dateRange.endYear, dateRange.endMonth);
         return CacheService.cacheAside(key, async () => {
-            const startYearInt = Number.parseInt(startYear, 10);
-            const startMonthInt = Number.parseInt(startMonth, 10);
-            const endYearInt = Number.parseInt(endYear, 10);
-            const endMonthInt = Number.parseInt(endMonth, 10);
-
-            if (
-                Number.isNaN(startYearInt) ||
-                Number.isNaN(startMonthInt) ||
-                Number.isNaN(endYearInt) ||
-                Number.isNaN(endMonthInt)
-            ) {
-                throw new Error('Invalid date range parameters.');
-            }
-
-            const startPeriod = startYearInt * 100 + startMonthInt;
-            const endPeriod = endYearInt * 100 + endMonthInt;
+            const startPeriod = dateRange.startYear * 100 + dateRange.startMonth;
+            const endPeriod = dateRange.endYear * 100 + dateRange.endMonth;
 
             if (endPeriod < startPeriod) {
                 throw new Error('End date must be the same or later than start date.');

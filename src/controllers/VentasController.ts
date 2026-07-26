@@ -113,10 +113,15 @@ export class VentasController {
         }
     }
     static async getVentasAgrupadoMensualPorProductoData(req: Request, res: Response) {
-        //receive as parameter the starting year and month and the ending year and month
         const { startYear, startMonth, endYear, endMonth } = req.query; 
         try {
-            const rawData = await VentasService.getVentasAgrupadoMensualPorProducto(startYear as string, startMonth as string, endYear as string, endMonth as string);
+            const dateRange = {
+                startYear: parseInt(startYear as string, 10),
+                startMonth: parseInt(startMonth as string, 10),
+                endYear: parseInt(endYear as string, 10),
+                endMonth: parseInt(endMonth as string, 10),
+            };
+            const rawData = await VentasService.getVentasAgrupadoMensualPorProducto(dateRange);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
             res.status(200).json({
@@ -136,10 +141,15 @@ export class VentasController {
     }
 
     static async getVentasDetalleProductoMensualFechasData(req: Request, res: Response) {
-        //receive as parameter the starting year and month and the ending year and month
         const { startYear, startMonth, endYear, endMonth, producto } = req.query;
         try {
-            const rawData = await VentasService.getVentasDetalleProductoMensualFechas(producto as string, startYear as string, startMonth as string, endYear as string, endMonth as string);
+            const dateRange = {
+                startYear: parseInt(startYear as string, 10),
+                startMonth: parseInt(startMonth as string, 10),
+                endYear: parseInt(endYear as string, 10),
+                endMonth: parseInt(endMonth as string, 10),
+            };
+            const rawData = await VentasService.getVentasDetalleProductoMensualFechas(producto as string, dateRange);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
             res.status(200).json({
