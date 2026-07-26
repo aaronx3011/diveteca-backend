@@ -3,6 +3,7 @@ import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
 import { ClientesService } from '../services/ClientesService';
+import { CacheService } from '../services/CacheService';
 
 export class ClientesController {
     
@@ -13,6 +14,10 @@ export class ClientesController {
 
         try {
             const fechas = await ClientesService.getClientesList();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 data: fechas

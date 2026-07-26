@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { DataService } from '../services/DataService';
+import { CacheService } from '../services/CacheService';
 import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
@@ -35,7 +36,13 @@ export class DataController {
             // 5. Run Totalizer for Dashboard Summaries
             const totals = Totalizer.calculateTotals(cleanData);
 
-            // 6. Return standard API response
+            // 6. Set stale cache header if serving stale data
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
+
+            // 7. Return standard API response
             res.status(200).json({
                 metadata: {
                     view: viewName,

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { DataService } from '../services/DataService';
+import { CacheService } from '../services/CacheService';
 import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
@@ -20,6 +21,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasAnual(year);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     year
@@ -38,6 +43,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasMensual(year);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     year
@@ -77,6 +86,10 @@ export class VentasController {
             const totals = Totalizer.calculateTotals(cleanData);
 
             // 6. Return standard API response
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     view: viewName,
@@ -100,6 +113,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasMensualPorProducto(producto);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     producto
@@ -119,6 +136,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasAgrupadoMensualPorProducto(startYear as string, startMonth as string, endYear as string, endMonth as string);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     startYear,
@@ -142,6 +163,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasDetalleProductoMensualFechas(producto as string, startYear as string, startMonth as string, endYear as string, endMonth as string);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {
                     startYear,
@@ -164,6 +189,10 @@ export class VentasController {
     static async getVentasFechasDisponiblesData(req: Request, res: Response) {
         try {
             const fechas = await VentasService.getVentasFechasDisponibles();
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 data: fechas
@@ -179,6 +208,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasTopClientesActual();
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -196,6 +229,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasClientesPorProducto(producto);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -213,6 +250,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasDetallePorCliente(cliente);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -228,6 +269,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasAgrupadoPorClienteAnual();
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -243,6 +288,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasAgrupadoAnualPorMesPorProducto();
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -259,6 +308,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasProductoPorCliente(cliente);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,
@@ -277,6 +330,10 @@ export class VentasController {
             const rawData = await VentasService.getVentasDetallePorMesPorAnio(year, month);
             const cleanData = DataSerializer.serialize(rawData);
             const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
             res.status(200).json({
                 metadata: {},
                 totals,

@@ -56,6 +56,10 @@ export class SessionsService {
     }
   }
 
+  static getSessionFromCache(token: string) {
+    return CacheService.getSession(token);
+  }
+
   static async revokeSession(token: string) {
     CacheService.deleteSession(token);
 
