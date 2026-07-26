@@ -1,0 +1,1 @@
+SELECT TOP 1 * FROM [A_MEDVAL_A].[dbo].[saCostoHistoricoEntrada]
