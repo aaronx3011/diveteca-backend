@@ -1,5 +1,6 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
+import { HealthService } from './HealthService';
 import { ServiceUnavailableError } from '../utils/errors';
 import sql from 'mssql';
 
@@ -59,7 +60,7 @@ export class InventarioService {
     }
 
     static async addAlmacenExcluido(codigoAlmacen: string) {
-        if (!CacheService.getMssqlAvailable()) {
+        if (!HealthService.getMssqlAvailable()) {
             throw new ServiceUnavailableError();
         }
         const pool = await getPool();
@@ -74,7 +75,7 @@ export class InventarioService {
     }
 
     static async removeAlmacenExcluido(codigoAlmacen: string) {
-        if (!CacheService.getMssqlAvailable()) {
+        if (!HealthService.getMssqlAvailable()) {
             throw new ServiceUnavailableError();
         }
         const pool = await getPool();

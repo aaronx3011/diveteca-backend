@@ -1,5 +1,6 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
+import { HealthService } from './HealthService';
 import { ServiceUnavailableError } from '../utils/errors';
 import sql from 'mssql';
 
@@ -36,7 +37,7 @@ export class SalesGoalsService {
     }
 
     static async create(year: number, month: number, goalAmount: number): Promise<SalesGoal> {
-        if (!CacheService.getMssqlAvailable()) {
+        if (!HealthService.getMssqlAvailable()) {
             throw new ServiceUnavailableError();
         }
         const pool = await getPool();
@@ -53,7 +54,7 @@ export class SalesGoalsService {
     }
 
     static async update(id: number, goalAmount: number): Promise<SalesGoal | null> {
-        if (!CacheService.getMssqlAvailable()) {
+        if (!HealthService.getMssqlAvailable()) {
             throw new ServiceUnavailableError();
         }
         const pool = await getPool();
@@ -70,7 +71,7 @@ export class SalesGoalsService {
     }
 
     static async delete(id: number): Promise<boolean> {
-        if (!CacheService.getMssqlAvailable()) {
+        if (!HealthService.getMssqlAvailable()) {
             throw new ServiceUnavailableError();
         }
         const pool = await getPool();

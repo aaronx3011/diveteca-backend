@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import { getPool } from '../config/database';
 import { signToken } from '../config/auth';
 import { CacheService } from './CacheService';
+import { HealthService } from './HealthService';
 import { ServiceUnavailableError } from '../utils/errors';
 import { SessionsService } from './SessionsService';
 
@@ -30,7 +31,7 @@ export class AuthService {
     ipAddress?: string,
     userAgent?: string
   ): Promise<AuthResult> {
-    if (!CacheService.getMssqlAvailable()) {
+    if (!HealthService.getMssqlAvailable()) {
       throw new ServiceUnavailableError();
     }
     const pool = await getPool();

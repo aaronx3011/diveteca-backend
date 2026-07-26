@@ -1,6 +1,6 @@
 import sql from 'mssql';
 import dotenv from 'dotenv';
-import { CacheService } from '../services/CacheService';
+import { HealthService } from '../services/HealthService';
 
 dotenv.config();
 
@@ -36,14 +36,14 @@ async function attemptConnection(resolve: (value: sql.ConnectionPool | null) => 
         pool = newPool;
         isConnected = true;
         connectionAttempts = 0;
-        CacheService.setMssqlAvailable(true);
-        CacheService.resetMssqlFailureCount();
+        HealthService.setMssqlAvailable(true);
+        HealthService.resetMssqlFailureCount();
         console.log(`✅ Connected to SQL Server at ${process.env.DB_SERVER}`);
         resolve(pool);
     } catch (err) {
         isConnected = false;
-        CacheService.setMssqlAvailable(false);
-        CacheService.incrementMssqlFailureCount();
+        HealthService.setMssqlAvailable(false);
+        HealthService.incrementMssqlFailureCount();
         console.error(`❌ Database Connection Failed (attempt ${connectionAttempts}):`, err);
 
         resolve(null);
