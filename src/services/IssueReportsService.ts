@@ -1,7 +1,5 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
-import { HealthService } from './HealthService';
-import { ServiceUnavailableError } from '../utils/errors';
 import sql from 'mssql';
 
 export interface IssueReport {
@@ -46,9 +44,6 @@ export class IssueReportsService {
     }
 
     static async create(title: string, description: string, reporterName: string, reporterEmail: string, severity: string): Promise<IssueReport> {
-        if (!HealthService.getMssqlAvailable()) {
-            throw new ServiceUnavailableError();
-        }
         const pool = await getPool();
         const result = await pool.request()
             .input('title', sql.VarChar(255), title)
@@ -66,9 +61,6 @@ export class IssueReportsService {
     }
 
     static async updateStatus(id: number, status: string): Promise<IssueReport | null> {
-        if (!HealthService.getMssqlAvailable()) {
-            throw new ServiceUnavailableError();
-        }
         const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, id)
@@ -85,9 +77,6 @@ export class IssueReportsService {
     }
 
     static async delete(id: number): Promise<boolean> {
-        if (!HealthService.getMssqlAvailable()) {
-            throw new ServiceUnavailableError();
-        }
         const pool = await getPool();
         const result = await pool.request()
             .input('id', sql.Int, id)

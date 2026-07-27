@@ -29,7 +29,23 @@ export function initCache(): void {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS cached_users (
+      username TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL DEFAULT 0,
+      email TEXT NOT NULL DEFAULT '',
+      password_hash TEXT NOT NULL DEFAULT '',
+      full_name TEXT NOT NULL DEFAULT '',
+      role TEXT NOT NULL DEFAULT 'user',
+      cached_at INTEGER NOT NULL DEFAULT 0
+    );
   `);
+
+  try {
+    db.exec(`ALTER TABLE cached_users ADD COLUMN user_id INTEGER`);
+  } catch {
+    // column already exists — ignore
+  }
 
   console.log(`SQLite cache initialized at ${cachePath}`);
 }

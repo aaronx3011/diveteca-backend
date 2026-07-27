@@ -1,36 +1,43 @@
 #!/bin/sh
 set -e
 
-modprobe wireguard 2>/dev/null || true
-
-mkdir -p /dev/net
-mknod /dev/net/tun c 10 200 2>/dev/null || true
-
 CONFIG=/etc/wireguard/wg0.conf
 
-ip link add dev wg0 type wireguard
+if [ -f "$CONFIG" ]; then
+  echo "WireGuard config found — setting up VPN..."
+  modprobe wireguard 2>/dev/null || true
 
-awk '
-/^\[/ { print; next }
-/^(PrivateKey|ListenPort|FwMark|PublicKey|PresharedKey|AllowedIPs|Endpoint|PersistentKeepalive|#|$)/ { print }
-' "$CONFIG" > /tmp/wg.conf
+  mkdir -p /dev/net
+  mknod /dev/net/tun c 10 200 2>/dev/null || true
 
-wg setconf wg0 /tmp/wg.conf
+  ip link add dev wg0 type wireguard
 
-ADDRESSES=$(grep -i '^Address' "$CONFIG" | head -1 | sed 's/.*=\s*//')
-OLDIFS=$IFS
-IFS=','
-for addr in $ADDRESSES; do
-  addr=$(echo "$addr" | xargs)
-  ip address add "$addr" dev wg0
-done
-IFS=$OLDIFS
+  awk '
+  /^\[/ { print; next }
+  /^(PrivateKey|ListenPort|FwMark|PublicKey|PresharedKey|AllowedIPs|Endpoint|PersistentKeepalive|#|$)/ { print }
+  ' "$CONFIG" > /tmp/wg.conf
 
-MTU=$(grep -i '^MTU' "$CONFIG" | head -1 | sed 's/.*=\s*//')
-if [ -n "$MTU" ]; then
-  ip link set mtu "$MTU" up dev wg0
+  wg setconf wg0 /tmp/wg.conf
+
+  ADDRESSES=$(grep -i '^Address' "$CONFIG" | head -1 | sed 's/.*=\s*//')
+  OLDIFS=$IFS
+  IFS=','
+  for addr in $ADDRESSES; do
+    addr=$(echo "$addr" | xargs)
+    ip address add "$addr" dev wg0
+  done
+  IFS=$OLDIFS
+
+  MTU=$(grep -i '^MTU' "$CONFIG" | head -1 | sed 's/.*=\s*//')
+  if [ -n "$MTU" ]; then
+    ip link set mtu "$MTU" up dev wg0
+  else
+    ip link set up dev wg0
+  fi
+
+  echo "WireGuard VPN established."
 else
-  ip link set up dev wg0
+  echo "No WireGuard config found — skipping VPN. Server will start in degraded mode."
 fi
 
 node dist/server.js

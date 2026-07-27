@@ -104,6 +104,62 @@ export class CacheService {
     }
   }
 
+  static cacheUser(user: {
+    user_id: number;
+    username: string;
+    email: string;
+    password_hash: string;
+    full_name: string;
+    role: string;
+  }): void {
+    const db = getCacheDb();
+    const now = Math.floor(Date.now() / 1000);
+    db.prepare(`
+      INSERT INTO cached_users (username, user_id, email, password_hash, full_name, role, cached_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(username) DO UPDATE SET
+        user_id = excluded.user_id,
+        email = excluded.email,
+        password_hash = excluded.password_hash,
+        full_name = excluded.full_name,
+        role = excluded.role,
+        cached_at = excluded.cached_at
+    `).run(user.username, user.user_id, user.email, user.password_hash, user.full_name, user.role, now);
+  }
+
+  static getCachedUser(username: string): {
+    user_id: number;
+    username: string;
+    email: string;
+    password_hash: string;
+    full_name: string;
+    role: string;
+  } | null {
+    const db = getCacheDb();
+    const row = db.prepare(`
+      SELECT user_id, username, email, password_hash, full_name, role
+      FROM cached_users WHERE username = ?
+    `).get(username) as any | undefined;
+    if (!row) return null;
+    return row;
+  }
+
+  static getCachedUserById(userId: number): {
+    user_id: number;
+    username: string;
+    email: string;
+    full_name: string;
+    role: string;
+  } | null {
+    const db = getCacheDb();
+    const row = db.prepare(`
+      SELECT user_id, username, email, full_name, role
+      FROM cached_users WHERE user_id = ?
+    `).get(userId) as any | undefined;
+    if (!row) return null;
+    return row;
+  }
+
   static buildCacheKey(serviceName: string, methodName: string, ...params: any[]): string {
     const paramParts = params.map(p => {
       if (p === null || p === undefined) return '';
