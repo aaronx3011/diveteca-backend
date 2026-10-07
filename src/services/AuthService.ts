@@ -122,12 +122,14 @@ export class AuthService {
         role: user.role,
       });
 
-      // Check if force_password_reset is active
+      // A forced reset requires the existing password; the login field is not a reset token.
       if (user.force_password_reset) {
         const now = new Date();
         const expiresAt = user.password_reset_expires_at ? new Date(user.password_reset_expires_at) : null;
 
         if (expiresAt && expiresAt > now) {
+          const passwordMatch = await bcrypt.compare(password, user.password_hash);
+          if (!passwordMatch) throw new Error('Invalid credentials');
           const newHash = await bcrypt.hash(password, SALT_ROUNDS);
 
           const updateRequest = pool.request();

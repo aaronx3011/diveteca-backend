@@ -6,6 +6,7 @@ import apiRoutes from './routes/api.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import { HealthController } from './controllers/HealthController';
+import { CacheService } from './services/CacheService';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use((req, res, next) => CacheService.runWithRequestContext(next));
 
 // Routes
 app.get('/api/health', HealthController.status);

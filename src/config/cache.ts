@@ -2,9 +2,11 @@ import Database from 'better-sqlite3';
 import path from 'path';
 
 let db: Database.Database | null = null;
+let cachePath: string | null = null;
 
 export function initCache(): void {
-  const cachePath = process.env.CACHE_PATH || path.join(__dirname, '../../data/cache.sqlite');
+  if (db) return;
+  cachePath = process.env.CACHE_PATH || path.join(__dirname, '../../data/cache.sqlite');
   db = new Database(cachePath);
 
   db.exec(`
@@ -21,8 +23,9 @@ export function initCache(): void {
       user_id TEXT NOT NULL,
       token TEXT NOT NULL,
       created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL,
-      is_valid INTEGER NOT NULL DEFAULT 1
+       expires_at INTEGER NOT NULL,
+       is_valid INTEGER NOT NULL DEFAULT 1,
+       sync_status TEXT NOT NULL DEFAULT 'synced'
     );
 
     CREATE TABLE IF NOT EXISTS cache_metadata (
@@ -46,13 +49,23 @@ export function initCache(): void {
   } catch {
     // column already exists — ignore
   }
+  try {
+    db.exec(`ALTER TABLE sessions ADD COLUMN sync_status TEXT NOT NULL DEFAULT 'synced'`);
+  } catch {
+    // column already exists — ignore
+  }
 
   console.log(`SQLite cache initialized at ${cachePath}`);
 }
 
+export function getCachePath(): string {
+  if (!cachePath) throw new Error('Cache not initialized. Call initCache() first.');
+  return cachePath;
+}
+
 export function getCacheDb(): Database.Database {
   if (!db) {
-    throw new Error('Cache not initialized. Call initCache() first.');
+    initCache();
   }
-  return db;
+  return db!;
 }

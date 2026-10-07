@@ -22,6 +22,7 @@ const dbConfig = {
 };
 
 let pool: sql.ConnectionPool | null = null;
+let connecting: Promise<sql.ConnectionPool> | null = null;
 let isConnected = false;
 let connectionAttempts = 0;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -47,6 +48,7 @@ function cancelRetry(): void {
 
 function onConnectSuccess(newPool: sql.ConnectionPool): void {
     cancelRetry();
+    const previousPool = pool;
     pool = newPool;
     isConnected = true;
     connectionAttempts = 0;
@@ -59,6 +61,19 @@ function onConnectSuccess(newPool: sql.ConnectionPool): void {
     });
 
     console.log(`✅ Connected to SQL Server at ${process.env.DB_SERVER}`);
+    void import('../services/SessionsService')
+        .then(({ SessionsService }) => SessionsService.reconcilePendingSessions())
+        .catch(error => console.error('Unable to reconcile cached sessions:', error));
+    if (previousPool && previousPool !== newPool) {
+        void previousPool.close().catch(() => undefined);
+    }
+}
+
+async function connectOnce(): Promise<sql.ConnectionPool> {
+    if (!connecting) {
+        connecting = new sql.ConnectionPool(dbConfig).connect().finally(() => { connecting = null; });
+    }
+    return connecting;
 }
 
 function scheduleRetry(): void {
@@ -74,7 +89,7 @@ function scheduleRetry(): void {
 async function attemptReconnect() {
     try {
         connectionAttempts++;
-        const newPool = await new sql.ConnectionPool(dbConfig).connect();
+        const newPool = await connectOnce();
         onConnectSuccess(newPool);
         console.log(`✅ Reconnected to SQL Server at ${process.env.DB_SERVER}`);
     } catch (err) {
@@ -87,7 +102,7 @@ async function attemptReconnect() {
 async function attemptInitialConnection(resolve: (value: sql.ConnectionPool | null) => void) {
     try {
         connectionAttempts++;
-        const newPool = await new sql.ConnectionPool(dbConfig).connect();
+        const newPool = await connectOnce();
         onConnectSuccess(newPool);
         resolve(pool);
     } catch (err) {
@@ -105,7 +120,7 @@ export async function getPool(): Promise<sql.ConnectionPool> {
 
     if (!HealthService.getMssqlAvailable() && HealthService.shouldRetryMssql()) {
         try {
-            const newPool = await new sql.ConnectionPool(dbConfig).connect();
+            const newPool = await connectOnce();
             onConnectSuccess(newPool);
             return pool!;
         } catch (err) {

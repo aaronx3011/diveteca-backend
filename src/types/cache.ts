@@ -13,4 +13,5 @@ export interface SessionCacheEntry {
   created_at: number;
   expires_at: number;
   is_valid: number;
+  sync_status: 'pending_create' | 'pending_revoke' | 'synced';
 }

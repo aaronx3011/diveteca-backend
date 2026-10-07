@@ -7,7 +7,8 @@
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "build": "tsc",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand --config unit.config.js",
+    "test:integration": "jest --runInBand --config test.config.js"
   },
   "keywords": [],
   "author": "",
