@@ -59,6 +59,12 @@ router.get('/clientes/', ClientesController.getClientesListData);
 router.get('/inventario/total/', InventarioController.getInventarioTotalData);
 
 router.get('/inventario/lotes/:codigoArticulo', InventarioController.getLotesByProducto);
+router.get('/inventario/reporte', InventarioController.getInventoryReport);
+router.get('/inventario/completo', InventarioController.getCompleteInventoryReport);
+router.get('/inventario/por-producto', InventarioController.getInventoryByProduct);
+router.get('/inventario/por-vencimiento', InventarioController.getInventoryByExpiry);
+router.get('/inventario/analisis-reposicion', InventarioController.getReplenishment);
+router.get('/inventario/analisis-reposicion/:filter', InventarioController.getReplenishment);
 
 router.get('/inventario/almacenes', InventarioController.getAlmacenesList);
 router.get('/inventario/almacenes-excluidos', InventarioController.getAlmacenesExcluidos);

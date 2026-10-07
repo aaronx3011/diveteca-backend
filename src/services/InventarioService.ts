@@ -1,33 +1,25 @@
 import { getPool } from '../config/database';
 import { CacheService } from './CacheService';
 import sql from 'mssql';
+import { InventoryReportService } from './InventoryReportService';
+import type { ReplenishmentFilter } from '../types/inventory';
 
 export class InventarioService {
     static async getInventarioTotal() {
-        const key = CacheService.buildCacheKey('InventarioService', 'getInventarioTotal');
-        return CacheService.cacheAside(key, async () => {
-            const pool = await getPool();
-            const query = `SELECT * FROM [aaron_view_TotalInventarioDolarizado]`;
-            const result = await pool.request().query(query);
-            return result.recordset;
-        });
+        const report = await InventoryReportService.getReport();
+        return { metadata: report.metadata, data: [InventoryReportService.calculateInventoryTotal(report.data)] };
     }
 
     static async getLotesByProducto(codigoArticulo: string) {
-        const key = CacheService.buildCacheKey('InventarioService', 'getLotesByProducto', codigoArticulo);
-        return CacheService.cacheAside(key, async () => {
-            const pool = await getPool();
-            const query = `
-                SELECT * FROM [aaron_view_DetalleInventarioAlmacenLoteVencimientoDolarizado]
-                WHERE Codigo_Articulo = @codigoArticulo
-                ORDER BY Fecha_Vencimiento ASC
-            `;
-            const request = pool.request();
-            request.input('codigoArticulo', codigoArticulo);
-            const result = await request.query(query);
-            return result.recordset;
-        });
+        const report = await InventoryReportService.getReport(codigoArticulo);
+        return { metadata: report.metadata, data: report.data.sort((left, right) => (left.Fecha_Vencimiento ?? '9999-12-31').localeCompare(right.Fecha_Vencimiento ?? '9999-12-31') || left.Codigo_Almacen.localeCompare(right.Codigo_Almacen) || left.Lote.localeCompare(right.Lote)) };
     }
+
+    static getInventoryReport() { return InventoryReportService.getReport(); }
+    static getCompleteInventoryReport() { return InventoryReportService.getCompleteReport(); }
+    static async getInventoryByProduct() { const report = await InventoryReportService.getReport(); return { metadata: report.metadata, data: InventoryReportService.aggregateByProduct(report.data) }; }
+    static async getInventoryByExpiry() { const report = await InventoryReportService.getReport(); return { metadata: report.metadata, data: InventoryReportService.aggregateByExpiry(report.data) }; }
+    static getReplenishment(filter: ReplenishmentFilter) { return InventoryReportService.getReplenishment(filter); }
 
     static async getAlmacenesList() {
         const key = CacheService.buildCacheKey('InventarioService', 'getAlmacenesList');
