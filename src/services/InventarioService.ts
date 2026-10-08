@@ -6,13 +6,33 @@ import type { ReplenishmentFilter } from '../types/inventory';
 
 export class InventarioService {
     static async getInventarioTotal() {
-        const report = await InventoryReportService.getReport();
-        return { metadata: report.metadata, data: [InventoryReportService.calculateInventoryTotal(report.data)] };
+        const key = CacheService.buildCacheKey('InventarioService', 'getInventarioTotal');
+        const data = await CacheService.cacheAside(key, async () => {
+            const result = await (await getPool()).request().query('SELECT * FROM [aaron_view_TotalInventarioDolarizado]');
+            return result.recordset;
+        });
+        return {
+            metadata: { source: 'target-inventory-view' as const, generatedAt: new Date().toISOString(), rowLimit: data.length, possiblyTruncated: false, count: data.length },
+            data,
+        };
     }
 
     static async getLotesByProducto(codigoArticulo: string) {
-        const report = await InventoryReportService.getReport(codigoArticulo);
-        return { metadata: report.metadata, data: report.data.sort((left, right) => (left.Fecha_Vencimiento ?? '9999-12-31').localeCompare(right.Fecha_Vencimiento ?? '9999-12-31') || left.Codigo_Almacen.localeCompare(right.Codigo_Almacen) || left.Lote.localeCompare(right.Lote)) };
+        const key = CacheService.buildCacheKey('InventarioService', 'getLotesByProducto', codigoArticulo);
+        const data = await CacheService.cacheAside(key, async () => {
+            const request = (await getPool()).request();
+            request.input('codigoArticulo', codigoArticulo);
+            const result = await request.query(`
+                SELECT * FROM [aaron_view_DetalleInventarioAlmacenLoteVencimientoDolarizado]
+                WHERE Codigo_Articulo = @codigoArticulo
+                ORDER BY Fecha_Vencimiento ASC
+            `);
+            return result.recordset;
+        });
+        return {
+            metadata: { source: 'target-inventory-view' as const, generatedAt: new Date().toISOString(), rowLimit: data.length, possiblyTruncated: false, count: data.length },
+            data,
+        };
     }
 
     static getInventoryReport() { return InventoryReportService.getReport(); }
@@ -27,7 +47,7 @@ export class InventarioService {
             const pool = await getPool();
             const query = `
                 SELECT DISTINCT co_alma AS Codigo_Almacen, des_alma AS Nombre_Almacen
-                FROM [A_MEDVAL_A].[dbo].[saAlmacen]
+                FROM [A_DIVETE_A].[dbo].[saAlmacen]
                 ORDER BY Nombre_Almacen
             `;
             const result = await pool.request().query(query);

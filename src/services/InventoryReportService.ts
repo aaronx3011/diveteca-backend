@@ -46,7 +46,7 @@ export class InventoryReportService {
 
     private static async loadReport(codigoArticulo?: string): Promise<InventoryReportResult> {
         const normalizedCode = codigoArticulo?.trim().toUpperCase();
-        const sources: InventorySourceDatabase[] = ['A_MEDVAL_A'];
+        const sources: InventorySourceDatabase[] = ['A_DIVETE_A'];
         const sourceResults = await Promise.all(sources.map(source => this.executeSource(source, normalizedCode)));
         const rows = sourceResults.flatMap(result => result.rows).map(row => this.mapRow(row)).sort((left, right) => left.Codigo_Articulo.localeCompare(right.Codigo_Articulo) || left.Codigo_Almacen.localeCompare(right.Codigo_Almacen) || left.Lote.localeCompare(right.Lote));
         const data = rows.slice(0, INVENTORY_REPORT_ROW_LIMIT);

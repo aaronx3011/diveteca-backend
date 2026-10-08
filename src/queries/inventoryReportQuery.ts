@@ -1,4 +1,4 @@
-export type InventorySourceDatabase = 'A_MEDVAL_A';
+export type InventorySourceDatabase = 'A_DIVETE_A';
 
 export const INVENTORY_REPORT_ROW_LIMIT = 10000;
 export const INVENTORY_REPORT_TIMEOUT_MS = 120000;
