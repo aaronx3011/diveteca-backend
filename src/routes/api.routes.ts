@@ -26,7 +26,7 @@ router.get('/ventas/total-anual/:year', VentasController.getVentasAnualData);
 router.get('/ventas/total-mensual/', VentasController.getVentasMensualData);
 router.get('/ventas/total-mensual/:year', VentasController.getVentasMensualData);
 
-router.get('/ventas/ventas-producto/', VentasController.getVentasMensualData);
+router.get('/ventas/ventas-producto/', VentasController.getVentasPorProductoData);
 router.get('/ventas/detalle-producto-mensual/:producto', VentasController.getVentasMensualPorProductoData);
 
 

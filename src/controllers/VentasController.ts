@@ -60,6 +60,21 @@ export class VentasController {
         }
     }
 
+    static async getVentasPorProductoData(req: Request, res: Response) {
+        try {
+            const cleanData = DataSerializer.serialize(await VentasService.getVentasPorProducto());
+            const totals = Totalizer.calculateTotals(cleanData);
+            if (CacheService.lastHitWasStale) {
+                res.setHeader('X-Cache-Stale', 'true');
+                CacheService.lastHitWasStale = false;
+            }
+            res.status(200).json({ metadata: { source: 'Vw_NotasEntregaVentas' }, totals, data: cleanData });
+        } catch (error: any) {
+            console.error('Error fetching product sales data:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
 
     // Fetches Data, applies serializers and totalizers
     static async getViewData(req: Request, res: Response) {

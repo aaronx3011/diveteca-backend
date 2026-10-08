@@ -9,7 +9,7 @@ export function buildInventoryReportQuery(database: InventorySourceDatabase): st
 
     return `
 SELECT TOP (${INVENTORY_REPORT_ROW_LIMIT})
-    RTRIM(ISNULL(A.ref, '')) AS [Referencia],
+    COALESCE(NULLIF(RTRIM(A.ref), ''), RTRIM(A.co_art)) AS [Referencia],
     RTRIM(A.co_art) AS [Código],
     RTRIM(A.art_des) AS [Descripción],
     RTRIM(ISNULL(AU.co_uni, '')) AS [Unidad],

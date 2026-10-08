@@ -105,12 +105,25 @@ export class InventoryReportService {
     }
 
     private static async getExcludedWarehouseCodes() {
-        const result = await (await getPool()).request().query<{ Codigo_Almacen: string }>('SELECT Codigo_Almacen FROM [aaron_AlmacenesExcluidos]');
-        return new Set(result.recordset.map(row => row.Codigo_Almacen.trim()));
+        try {
+            const result = await (await getPool()).request().query<{ Codigo_Almacen: string }>('SELECT Codigo_Almacen FROM [aaron_AlmacenesExcluidos]');
+            return new Set(result.recordset.map(row => row.Codigo_Almacen.trim()));
+        } catch (error: any) {
+            // The exclusions table is optional deployment configuration, not an ERP source.
+            if (error?.number === 208) return new Set<string>();
+            throw error;
+        }
     }
 
     private static async getSalesVelocity() {
-        const result = await (await getPool()).request().query<SalesVelocityRow>('SELECT Codigo_Articulo, Promedio_Mensual_Unidades FROM [aaron_view_PromedioVentasUltimoAnio]');
+        const result = await (await getPool()).request().query<SalesVelocityRow>(`
+            SELECT Codigo_Articulo, SUM(Cantidad) / 12.0 AS Promedio_Mensual_Unidades
+            FROM dbo.Vw_NotasEntregaVentas
+            WHERE Anulado = 0
+                AND Fecha >= DATEADD(YEAR, -1, GETDATE())
+                AND Fecha <= GETDATE()
+            GROUP BY Codigo_Articulo
+        `);
         return new Map(result.recordset.map(row => [row.Codigo_Articulo.trim(), nullableNumber(row.Promedio_Mensual_Unidades) ?? 0]));
     }
 

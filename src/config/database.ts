@@ -9,10 +9,11 @@ const dbConfig = {
     password: process.env.DB_PASSWORD as string,
     server: process.env.DB_SERVER as string,
     database: process.env.DB_NAME as string,
+    connectionTimeout: 5000,
+    requestTimeout: 60000,
     options: {
         encrypt: true,
         trustServerCertificate: true,
-        connectTimeout: 5000,
     },
     pool: {
         max: 10,
