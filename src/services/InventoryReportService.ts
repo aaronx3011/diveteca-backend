@@ -46,11 +46,11 @@ export class InventoryReportService {
 
     private static async loadReport(codigoArticulo?: string): Promise<InventoryReportResult> {
         const normalizedCode = codigoArticulo?.trim().toUpperCase();
-        const sources: InventorySourceDatabase[] = ['A_DIVETE_A'];
+        const sources: InventorySourceDatabase[] = ['N_DIVETE_A'];
         const sourceResults = await Promise.all(sources.map(source => this.executeSource(source, normalizedCode)));
         const rows = sourceResults.flatMap(result => result.rows).map(row => this.mapRow(row)).sort((left, right) => left.Codigo_Articulo.localeCompare(right.Codigo_Articulo) || left.Codigo_Almacen.localeCompare(right.Codigo_Almacen) || left.Lote.localeCompare(right.Lote));
         const data = rows.slice(0, INVENTORY_REPORT_ROW_LIMIT);
-        return { metadata: { source: 'inventory-movement-report', generatedAt: new Date().toISOString(), rowLimit: INVENTORY_REPORT_ROW_LIMIT, possiblyTruncated: sourceResults.some(result => result.reachedLimit) || rows.length > INVENTORY_REPORT_ROW_LIMIT, count: data.length }, data };
+        return { metadata: { source: 'target-stock-report', generatedAt: new Date().toISOString(), rowLimit: INVENTORY_REPORT_ROW_LIMIT, possiblyTruncated: sourceResults.some(result => result.reachedLimit) || rows.length > INVENTORY_REPORT_ROW_LIMIT, count: data.length }, data };
     }
 
     static async getReport(codigoArticulo?: string): Promise<InventoryReportResult> {
@@ -124,9 +124,9 @@ export class InventoryReportService {
             return { Codigo_Articulo: product.Codigo_Articulo, Ref_Articulo: product.Ref_Articulo, Descripcion_Articulo: product.Nombre_Articulo, Stock_Total: product.Total_Unidades, Proximo_Vencimiento: product.Proximo_Vencimiento, Estado_Stock: expired ? 'VENCIDO' as const : critical ? 'CRITICO' as const : 'VIGENTE' as const, Venta_Promedio_Mensual_Actual: average, Meses_De_Inventario_Restante: months, Meta_Venta_Mensual_Para_No_Perder: expired || critical ? product.Total_Unidades : days !== null && days > 0 ? round(product.Total_Unidades / (days / 30)) : null, Ultimo_Precio_Venta_USD: product.Ultimo_Precio_Venta_USD, Ultimo_Costo_Compra_USD: product.Ultimo_Costo_Compra_USD };
         }).filter(row => {
             const days = row.Proximo_Vencimiento ? dayDifference(now, new Date(row.Proximo_Vencimiento)) : null;
-            if (filter === 'activo') return days !== null && days >= 0;
+            if (filter === 'activo') return days === null || days >= 0;
             if (filter === 'critico') return days !== null && days >= 0 && days <= 30;
-            return filter !== 'stock-bajo' || (days !== null && days >= 0 && row.Venta_Promedio_Mensual_Actual > 0 && row.Meses_De_Inventario_Restante !== null && row.Meses_De_Inventario_Restante <= 3);
+            return filter !== 'stock-bajo' || (row.Venta_Promedio_Mensual_Actual > 0 && row.Meses_De_Inventario_Restante !== null && row.Meses_De_Inventario_Restante <= 3);
         });
         return { metadata: { ...report.metadata, count: data.length }, data };
     }
