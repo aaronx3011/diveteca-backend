@@ -3,6 +3,8 @@ services:
     build:
       context: ..
       dockerfile: diveteca-backend/Dockerfile
+      args:
+        FRONTEND_DIR: ${FRONTEND_DIR:-diveteca-crm-frontend}
     env_file:
       - .env
     ports:

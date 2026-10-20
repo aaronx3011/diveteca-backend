@@ -1,8 +1,9 @@
 FROM node:22-alpine AS frontend-builder
+ARG FRONTEND_DIR=diveteca-crm-frontend
 WORKDIR /app
-COPY diveteca-crm-frontend/package*.json ./
+COPY ${FRONTEND_DIR}/package*.json ./
 RUN npm install
-COPY diveteca-crm-frontend/ ./
+COPY ${FRONTEND_DIR}/ ./
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
