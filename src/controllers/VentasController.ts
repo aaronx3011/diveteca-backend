@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { DataService } from '../services/DataService';
 import { CacheService } from '../services/CacheService';
 import { ALLOWED_VIEWS } from '../constants/views';
@@ -34,7 +35,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching annual sales data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
     static async getVentasMensualData(req: Request, res: Response) {
@@ -56,7 +57,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching monthly sales data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -71,7 +72,7 @@ export class VentasController {
             res.status(200).json({ metadata: { source: 'Vw_NotasEntregaVentas' }, totals, data: cleanData });
         } catch (error: any) {
             console.error('Error fetching product sales data:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            sendControllerError(res, error);
         }
     }
 
@@ -118,7 +119,7 @@ export class VentasController {
 
         } catch (error: any) {
             console.error(`Error fetching view ${req.params.viewName}:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -141,7 +142,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching product sales data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
     static async getVentasAgrupadoMensualPorProductoData(req: Request, res: Response) {
@@ -172,7 +173,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching grouped monthly product sales data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -205,7 +206,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching detailed monthly product sales data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -224,7 +225,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching available sales dates:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -244,7 +245,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching top clients data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -265,7 +266,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching clients by product data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -286,7 +287,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching detailed sales data by client:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
     static async getVentasAgrupadoPorClienteAnualData(req: Request, res: Response) {
@@ -305,7 +306,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching annual grouped sales data by client:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
     static async getVentasAgrupadoAnualPorMesPorProductoData(req: Request, res: Response) {
@@ -324,7 +325,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching annual grouped sales data by month:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
     static async getVentasProductoPorClienteData(req: Request, res: Response) {
@@ -344,7 +345,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching products by client data:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 
@@ -366,7 +367,7 @@ export class VentasController {
             });
         } catch (error: any) {
             console.error(`Error fetching detailed sales data by month and year:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 }

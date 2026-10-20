@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { PatchNotesService } from '../services/PatchNotesService';
 import { CacheService } from '../services/CacheService';
 
@@ -13,7 +14,7 @@ export class PatchNotesController {
             res.status(200).json({ data: notes });
         } catch (error: any) {
             console.error('Error fetching patch notes:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            sendControllerError(res, error);
         }
     }
 
@@ -34,7 +35,7 @@ export class PatchNotesController {
             res.status(200).json({ data: note });
         } catch (error: any) {
             console.error('Error fetching patch note:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            sendControllerError(res, error);
         }
     }
 }

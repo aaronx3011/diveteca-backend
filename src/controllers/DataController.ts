@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { DataService } from '../services/DataService';
 import { CacheService } from '../services/CacheService';
 import { ALLOWED_VIEWS } from '../constants/views';
@@ -56,7 +57,7 @@ export class DataController {
 
         } catch (error: any) {
             console.error(`Error fetching view ${req.params.viewName}:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 }

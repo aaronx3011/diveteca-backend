@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { UserService } from '../services/UserService';
 import { CacheService } from '../services/CacheService';
 
@@ -13,7 +14,7 @@ export class UserController {
       res.status(200).json({ data: users });
     } catch (error: any) {
       console.error('Error fetching users:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 }

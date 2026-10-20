@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { ALLOWED_VIEWS } from '../constants/views';
 import { DataSerializer } from '../serializers/DataSerializer';
 import { Totalizer } from '../utils/totalizer';
@@ -24,7 +25,7 @@ export class ClientesController {
             });
         } catch (error: any) {
             console.error(`Error fetching available sales dates:`, error);
-            res.status(500).json({ error: "Internal Server Error" });
+            sendControllerError(res, error);
         }
     }
 }

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { sendControllerError } from '../utils/errors';
 import { AuthService } from '../services/AuthService';
 import { SessionsService } from '../services/SessionsService';
 import { ServiceUnavailableError } from '../utils/errors';
@@ -31,7 +32,7 @@ export class AuthController {
       if (error.message?.includes('UNIQUE') || error.number === 2627) {
         return res.status(409).json({ error: 'Username or email already exists' });
       }
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 
@@ -59,7 +60,7 @@ export class AuthController {
       if (error.message === 'Invalid credentials') {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 
@@ -73,7 +74,7 @@ export class AuthController {
       res.status(200).json({ message: 'Logged out successfully' });
     } catch (error: any) {
       console.error('Logout error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 
@@ -92,7 +93,7 @@ export class AuthController {
       if (error.message === 'User not found') {
         return res.status(404).json({ error: 'User not found' });
       }
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 
@@ -109,7 +110,7 @@ export class AuthController {
         return res.status(503).json({ error: 'service_unavailable', message: error.message });
       }
       console.error('Check reset error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      sendControllerError(res, error);
     }
   }
 }
