@@ -38,14 +38,19 @@ export class InventarioService {
     static async getAlmacenesExcluidos() {
         const key = CacheService.buildCacheKey('InventarioService', 'getAlmacenesExcluidos');
         return CacheService.cacheAside(key, async () => {
-            const pool = await getPool();
-            const query = `
-                SELECT Codigo_Almacen
-                FROM [aaron_AlmacenesExcluidos]
-                ORDER BY Codigo_Almacen
-            `;
-            const result = await pool.request().query(query);
-            return result.recordset;
+            try {
+                const pool = await getPool();
+                const query = `
+                    SELECT Codigo_Almacen
+                    FROM [aaron_AlmacenesExcluidos]
+                    ORDER BY Codigo_Almacen
+                `;
+                const result = await pool.request().query(query);
+                return result.recordset;
+            } catch (error: any) {
+                if (error?.number === 208) return [];
+                throw error;
+            }
         });
     }
 

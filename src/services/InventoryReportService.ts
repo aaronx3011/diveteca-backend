@@ -1,7 +1,10 @@
 import sql from 'mssql';
+import { CacheService } from './CacheService';
 import { getPool } from '../config/database';
 import { buildInventoryReportQuery, INVENTORY_REPORT_ROW_LIMIT, INVENTORY_REPORT_TIMEOUT_MS, InventorySourceDatabase } from '../queries/inventoryReportQuery';
 import type { InventoryByExpiry, InventoryByProduct, InventoryDetailTotals, InventoryItem, InventoryMetadata, InventoryReportResult, InventoryTotal, RawInventoryReportRow, ReplenishmentFilter, ReplenishmentItem } from '../types/inventory';
+
+const REPORT_TTL_SECONDS = 3600;
 
 interface SourceResult { rows: RawInventoryReportRow[]; reachedLimit: boolean; }
 interface SalesVelocityRow { Codigo_Articulo: string; Promedio_Mensual_Unidades: number | string | null; }
@@ -54,9 +57,12 @@ export class InventoryReportService {
     }
 
     static async getReport(codigoArticulo?: string): Promise<InventoryReportResult> {
-        if (codigoArticulo) return this.loadReport(codigoArticulo);
+        if (codigoArticulo) {
+            const detailKey = CacheService.buildCacheKey('InventoryReportService', 'getReport', codigoArticulo.trim().toUpperCase());
+            return CacheService.cacheAside(detailKey, () => this.loadReport(codigoArticulo));
+        }
         if (this.fullReportInFlight) return this.fullReportInFlight;
-        const execution = this.loadReport();
+        const execution = CacheService.cacheAside(CacheService.buildCacheKey('InventoryReportService', 'getReport'), () => this.loadReport(), REPORT_TTL_SECONDS);
         this.fullReportInFlight = execution;
         try { return await execution; } finally { if (this.fullReportInFlight === execution) this.fullReportInFlight = null; }
     }
@@ -105,26 +111,29 @@ export class InventoryReportService {
     }
 
     private static async getExcludedWarehouseCodes() {
-        try {
-            const result = await (await getPool()).request().query<{ Codigo_Almacen: string }>('SELECT Codigo_Almacen FROM [aaron_AlmacenesExcluidos]');
-            return new Set(result.recordset.map(row => row.Codigo_Almacen.trim()));
-        } catch (error: any) {
-            // The exclusions table is optional deployment configuration, not an ERP source.
-            if (error?.number === 208) return new Set<string>();
-            throw error;
-        }
-    }
+        return CacheService.cacheAside(CacheService.buildCacheKey('InventoryReportService', 'getExcludedWarehouseCodes'), async () => {
+            try {
+                const result = await (await getPool()).request().query<{ Codigo_Almacen: string }>('SELECT Codigo_Almacen FROM [aaron_AlmacenesExcluidos]');
+                return Array.from(result.recordset.map(row => row.Codigo_Almacen.trim()));
+            } catch (error: any) {
+                // The exclusions table is optional deployment configuration, not an ERP source.
+                if (error?.number === 208) return [];
+                throw error;
+            }
+        }, 1800).then(codes => new Set<string>(codes));    }
 
     private static async getSalesVelocity() {
-        const result = await (await getPool()).request().query<SalesVelocityRow>(`
-            SELECT Codigo_Articulo, SUM(Cantidad) / 12.0 AS Promedio_Mensual_Unidades
-            FROM dbo.Vw_NotasEntregaVentas
-            WHERE Anulado = 0
-                AND Fecha >= DATEADD(YEAR, -1, GETDATE())
-                AND Fecha <= GETDATE()
-            GROUP BY Codigo_Articulo
-        `);
-        return new Map(result.recordset.map(row => [row.Codigo_Articulo.trim(), nullableNumber(row.Promedio_Mensual_Unidades) ?? 0]));
+        return CacheService.cacheAside(CacheService.buildCacheKey('InventoryReportService', 'getSalesVelocity'), async () => {
+            const result = await (await getPool()).request().query<SalesVelocityRow>(`
+                SELECT Codigo_Articulo, SUM(Cantidad) / 12.0 AS Promedio_Mensual_Unidades
+                FROM dbo.Vw_NotasEntregaVentas
+                WHERE Anulado = 0
+                    AND Fecha >= DATEADD(YEAR, -1, GETDATE())
+                    AND Fecha <= GETDATE()
+                GROUP BY Codigo_Articulo
+            `);
+            return result.recordset.map(row => ({ Codigo_Articulo: row.Codigo_Articulo.trim(), Promedio_Mensual_Unidades: nullableNumber(row.Promedio_Mensual_Unidades) ?? 0 }));
+        }, 3600).then(rows => new Map(rows.map((row): [string, number] => [row.Codigo_Articulo, row.Promedio_Mensual_Unidades])));
     }
 
     static async getReplenishment(filter: ReplenishmentFilter): Promise<{ metadata: InventoryMetadata; data: ReplenishmentItem[] }> {
