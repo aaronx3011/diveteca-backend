@@ -69,3 +69,25 @@ export function getCacheDb(): Database.Database {
   }
   return db!;
 }
+
+export interface CacheHealth {
+  available: boolean;
+  cacheEntries: number;
+  sessions: number;
+  cachedUsers: number;
+}
+
+export function getCacheHealth(): CacheHealth {
+  try {
+    const database = getCacheDb();
+    const now = Math.floor(Date.now() / 1000);
+    return {
+      available: true,
+      cacheEntries: (database.prepare('SELECT COUNT(*) AS n FROM cache_entries').get() as { n: number }).n,
+      sessions: (database.prepare('SELECT COUNT(*) AS n FROM sessions WHERE is_valid = 1 AND expires_at > ?').get(now) as { n: number }).n,
+      cachedUsers: (database.prepare('SELECT COUNT(*) AS n FROM cached_users').get() as { n: number }).n,
+    };
+  } catch {
+    return { available: false, cacheEntries: 0, sessions: 0, cachedUsers: 0 };
+  }
+}

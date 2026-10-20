@@ -139,4 +139,29 @@ export function isMssqlConnected(): boolean {
     return isConnected;
 }
 
+export function createProbeConnection(): sql.ConnectionPool {
+    const probeTimeout = Number.parseInt(process.env.DB_PROBE_TIMEOUT_MS ?? '3000', 10);
+    return new sql.ConnectionPool({
+        ...dbConfig,
+        connectionTimeout: probeTimeout,
+        requestTimeout: probeTimeout,
+        pool: { max: 1, min: 0, idleTimeoutMillis: 30000 }
+    });
+}
+
+export function noteMssqlProbeResult(ok: boolean): void {
+    if (ok) {
+        if (isConnected && !HealthService.getMssqlAvailable()) {
+            console.log('✅ MSSQL live probe confirms connectivity — reconciling stale availability metadata');
+            HealthService.setMssqlAvailable(true);
+            HealthService.resetMssqlFailureCount();
+        }
+        return;
+    }
+    if (isConnected) {
+        console.warn('⚠️ MSSQL live probe failed while pool flag reports connected — stale connectivity detected');
+        markUnavailable();
+    }
+}
+
 export default poolPromise;
