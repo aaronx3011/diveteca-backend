@@ -144,3 +144,5 @@ data/
 # SSH keys (specific to this project)
 aaronx3011Github
 aaronx3011Github.pub
+# WireGuard peer config (contains PrivateKey) — never commit
+wg0.conf
