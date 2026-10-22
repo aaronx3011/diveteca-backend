@@ -40,6 +40,7 @@ OUTER APPLY (
     ORDER BY CE.fecha_emision DESC
 ) AS CA
 WHERE S.stock > 0
+    AND RTRIM(S.tipo) = 'ACT'
     AND A.anulado = 0
     AND (@FiltroArticuloDesde IS NULL OR A.co_art >= @FiltroArticuloDesde)
     AND (@FiltroArticuloHasta IS NULL OR A.co_art <= @FiltroArticuloHasta)
